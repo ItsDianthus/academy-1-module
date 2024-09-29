@@ -1,6 +1,6 @@
 package domain
 
-// Session - модель основного игрового процесса
+// Session - модель основного игрового процесса.
 type Session struct {
 	SessionMode    Mode
 	LastTriesCount int

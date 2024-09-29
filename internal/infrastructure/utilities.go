@@ -19,18 +19,14 @@ func findLetterIndices(word string, letter string) ([]int, error) {
 }
 
 func insertSymbols(initialString string, letter string, indices []int) string {
-	// Преобразуем строку в срез рун для возможности замены
 	runes := []rune(initialString)
 
-	// Преобразуем строку в руну (берём первый символ как руну, даже если это кириллица)
 	letterRune := []rune(letter)[0]
 
-	// Проходим по индексам
 	for _, index := range indices {
-		// Вычисляем позицию index*2
 		pos := index * 2
-		if pos < len(runes) { // Проверяем, что индекс не выходит за пределы строки
-			runes[pos] = letterRune // Заменяем символ по индексу pos
+		if pos < len(runes) {
+			runes[pos] = letterRune
 		}
 	}
 	return string(runes)

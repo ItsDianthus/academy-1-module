@@ -8,16 +8,16 @@ import (
 )
 
 func GenerateCategory(session domain.Session) (string, bool) {
-	// Проверяем, есть ли категории в сессии
+	// Проверяем, есть ли категории в сессии.
 	if len(session.Data) == 0 {
-		return "", false // Возвращаем пустую категорию, если нет категорий
+		return "", false // Возвращаем пустую категорию, если нет категорий.
 	}
 
-	// Инициализируем генератор случайных чисел
+	// Инициализируем генератор случайных чисел.
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	// Выбираем случайный индекс
 	randomIndex := rand.Intn(len(session.Data))
-	return session.Data[randomIndex].Name, true // Возвращаем случайную категорию
+	return session.Data[randomIndex].Name, true // Возвращаем случайную категорию.
 }
 
 func GenerateWord(session domain.Session, categoryName string, difficulty int) (string, bool, string) {
