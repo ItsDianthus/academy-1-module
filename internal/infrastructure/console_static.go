@@ -7,14 +7,18 @@ func WelcomeWord() {
 }
 
 func EndGameWriter(gameWin bool, word string) {
+	fmt.Println()
+
 	if gameWin {
 		fmt.Println("Вы победили! :)")
 	} else {
 		fmt.Println("Вы проиграли :(")
 	}
+
 	fmt.Println("Загаданное слово: ", word)
 }
 
+//nolint:funlen // Hardcoding of animations
 func HangmanWriter(tries int) {
 	switch tries {
 	case 11:
@@ -128,5 +132,4 @@ func HangmanWriter(tries int) {
 	default:
 		fmt.Println("Некорректное значение попыток.")
 	}
-
 }
