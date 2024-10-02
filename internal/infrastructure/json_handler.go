@@ -52,7 +52,7 @@ func LoadCategoriesFromJSON(filePath string) ([]domain.Category, error) {
 // CategoryExists - Проверить, существует ли категория по названию.
 func CategoryExists(categories []domain.Category, name string) bool {
 	for _, category := range categories {
-		if strings.ToLower(category.Name) == strings.ToLower(name) {
+		if strings.EqualFold(category.Name, name) {
 			return true
 		}
 	}

@@ -21,6 +21,7 @@ func PrintCategoryNames(session *domain.Session) {
 	}
 
 	fmt.Println("Доступные категории:")
+
 	for _, category := range session.Data {
 		fmt.Println("-", category.Name)
 	}

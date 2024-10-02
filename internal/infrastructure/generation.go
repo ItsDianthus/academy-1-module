@@ -26,7 +26,7 @@ func GenerateCategory(data []domain.Category) (string, bool) {
 func GenerateWord(data []domain.Category, categoryName string, difficulty int) (word string, fin bool, gameField string) {
 	// Ищем категорию по имени
 	for _, category := range data {
-		if strings.ToLower(category.Name) == strings.ToLower(categoryName) {
+		if strings.EqualFold(category.Name, categoryName) {
 			var wordsByDifficulty []domain.Word
 
 			for _, word := range category.Words {
