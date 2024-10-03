@@ -9,18 +9,19 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"golang.org/x/exp/slog"
+
 	"github.com/es-debug/backend-academy-2024-go-template/internal/domain"
 	"github.com/es-debug/backend-academy-2024-go-template/pkg"
 )
 
 func PrintCategoryNames(session *domain.Session) {
 	if len(session.Data) == 0 {
+		slog.Warn("No categories available.")
 		fmt.Println("Категории отсутствуют.")
 
 		return
 	}
-
-	fmt.Println("Доступные категории:")
 
 	for _, category := range session.Data {
 		fmt.Println("-", category.Name)
@@ -30,7 +31,7 @@ func PrintCategoryNames(session *domain.Session) {
 func Writer(session *domain.Session) {
 	switch session.SessionMode {
 	case domain.GetCategory:
-		fmt.Println("\n1) Начнём с выбора категории.")
+		fmt.Println("\n1) Начнём с выбора категории. Доступные категории: ")
 		PrintCategoryNames(session)
 		fmt.Println("Если вы хотите случайную категорию, напишите '-'")
 	case domain.GetDifficulty:
@@ -48,7 +49,7 @@ func Writer(session *domain.Session) {
 		fmt.Println("Осталось шансов на ошибку: ", session.LastTriesCount, "[ сложность:", session.Difficulty, "]")
 		fmt.Print("Введите букву (русский алфавит): ")
 	case domain.End:
-		// Здесь мог бы быть вопрос про выход из игры.
+		slog.Info("End of the game session.")
 	default:
 		fmt.Print("Всем привет. Это дефолт.\n")
 	}
@@ -60,34 +61,37 @@ func HandleCategoryInput(session *domain.Session) {
 		_, err := fmt.Scan(&category)
 
 		if err != nil {
-			// Если произошла ошибка ввода, выводим сообщение
+			slog.Error("Error reading category input", slog.Any("error", err))
 			fmt.Println("Попробуйте ввести категорию ещё раз")
+
 			return
 		}
 
 		if category == "-" {
-			// Генерация случайной категории
 			category, found := GenerateCategory(session.Data)
 			if found {
+				slog.Info("Random category selected", slog.String("category", category))
 				fmt.Println("Случайная категория была выбрана:", category)
 				session.Category = category
 
 				return
 			}
 
+			slog.Warn("No categories found for random selection.")
 			fmt.Println("Категории не найдены.")
 
 			return
 		}
 
 		if CategoryExists(session.Data, category) {
-			// Если ввод успешен, продолжаем
+			slog.Info("User selected category", slog.String("category", category))
 			fmt.Println("Вы ввели категорию: ", category)
 			session.Category = category
 
 			return
 		}
 
+		slog.Warn("Invalid category input", slog.String("input", category))
 		fmt.Println("Попробуйте ввести категорию ещё раз")
 	}
 }
@@ -100,19 +104,20 @@ func HandleDifficultyInput(session *domain.Session) {
 			input := scanner.Text()
 
 			if input == "-" {
-				// Генерация случайного уровня сложности
 				level := pkg.GenerateRandomLevel()
 				SetDifficulty(level, session)
+				slog.Info("Random difficulty level selected", slog.Int("difficulty", level))
 
 				return
 			}
 
-			// Пробуем преобразовать строку в число
 			level, err := strconv.Atoi(strings.TrimSpace(input))
 			if err != nil || level < 0 || level > 3 {
+				slog.Warn("Invalid difficulty input", slog.String("input", input))
 				fmt.Println("Ошибка: введите число от 0 до 3.")
 			} else {
 				SetDifficulty(level, session)
+				slog.Info("User selected difficulty level", slog.Int("difficulty", level))
 
 				return
 			}
@@ -138,46 +143,48 @@ func Reader(session *domain.Session) {
 			session.SessionMode--
 		}()
 
-		// Проверка на единственность буквы.
-		if len([]rune(input)) != 1 {
-			fmt.Println("Ошибка: введите ровно одну букву")
-			return
-		}
-
-		if !unicode.IsLetter(symb) || !unicode.In(symb, unicode.Cyrillic) {
+		if len([]rune(input)) != 1 || (!unicode.IsLetter(symb) || !unicode.In(symb, unicode.Cyrillic)) {
+			slog.Warn("Invalid character input", slog.String("input", input))
 			fmt.Println("Ошибка: введённый символ не является буквой русского алфавита")
+
 			return
 		}
 
 		if exists := session.LettersUsed[symb]; exists {
+			slog.Warn("Letter already used", slog.String("letter", input))
 			fmt.Println("Буква ", input, " уже была использована. Введите другую букву.")
+
 			return
 		}
 
 		indices, err := findLetterIndices(session.Word, input)
 		if err != nil {
+			slog.Error("Error finding letter indices", slog.Any("error", err))
 			fmt.Println("Ошибка:", err)
+
 			return
 		}
 
 		if len(indices) != 0 {
-			// БУКВА УГАДАНА
 			session.GameField = insertSymbols(session.GameField, input, indices)
+			slog.Info("Letter guessed", slog.String("letter", input))
 
 			if !strings.Contains(session.GameField, "_") {
 				EndGameWriter(true, session.Word)
+				slog.Info("User won the game", slog.String("word", session.Word))
 
 				session.SessionMode++
 
 				return
 			}
 		} else {
-			// БУКВА НЕ УГАДАНА
 			session.LastTriesCount--
 			HangmanWriter(session.LastTriesCount)
+			slog.Warn("Letter not guessed", slog.String("letter", input))
 
 			if session.LastTriesCount == 0 {
 				EndGameWriter(false, session.Word)
+				slog.Info("User lost the game", slog.String("word", session.Word))
 
 				session.SessionMode++
 
@@ -187,8 +194,5 @@ func Reader(session *domain.Session) {
 
 		session.LettersUsed[symb] = true
 	case domain.End:
-	// Здесь мог бы быть функционал считывания кнопки Enter/Escape для продолжения/остановки игры.
-	default:
-		fmt.Println("Ошибка.")
 	}
 }

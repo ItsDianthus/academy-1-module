@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"unicode/utf8"
 
+	"golang.org/x/exp/slog"
+
 	"github.com/es-debug/backend-academy-2024-go-template/internal/domain"
 )
 
@@ -19,11 +21,13 @@ func SetDifficulty(level int, session *domain.Session) {
 		session.LastTriesCount = 4
 	}
 
+	slog.Info("Difficulty level set", slog.Int("level", level))
 	fmt.Println("Установлен уровень сложности:", level)
 }
 
 func findLetterIndices(word, letter string) ([]int, error) {
 	if len([]rune(letter)) != 1 {
+		slog.Error("Invalid letter input", slog.String("letter", letter))
 		return nil, fmt.Errorf("переданы неверные значения")
 	}
 
